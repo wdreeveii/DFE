@@ -90,4 +90,12 @@ func main() {
 	g.StartFlowGraph()
 
 	time.Sleep(10 * time.Second)
+
+	g.StopFlowGraph()
+
+	time.Sleep(3 * time.Second)
+
+	g.StartFlowGraph()
+
+	time.Sleep(10 * time.Second)
 }

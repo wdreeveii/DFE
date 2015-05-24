@@ -2,6 +2,7 @@ package util
 
 import (
 	"DFE/builder"
+	//"fmt"
 	"time"
 )
 
@@ -15,32 +16,48 @@ func init() {
 	builder.Register(sq)
 }
 
-func CounterImplementation(m builder.ActorManagement, in <-chan float64, out chan<- float64) {
-	var a float64
-	var inval float64
+type CounterState struct {
+	a     float64
+	inval float64
+}
 
-	out <- a
+func CounterImplementation(m builder.ActorManagement, in <-chan float64, out chan<- float64) {
+	state, _ := m.State.(CounterState)
+
+	out <- state.a
 	for {
-		v := <-in
-		if inval <= 0 && v > 0 {
-			a++
-			out <- a
+		select {
+		case d := <-m.Done:
+			d <- state
+			return
+		case v := <-in:
+			if state.inval <= 0 && v > 0 {
+				state.a++
+				out <- state.a
+			}
+			state.inval = v
 		}
-		inval = v
 	}
 }
 
 func SquareWaveImplementation(m builder.ActorManagement, out chan<- float64) {
 	ticker := time.Tick(500 * time.Millisecond)
-	var a float64
+
+	a, _ := m.State.(float64)
+
 	out <- a
 	for {
-		<-ticker
-		if a == 0 {
-			a = 1
-		} else {
-			a = 0
+		select {
+		case d := <-m.Done:
+			d <- a
+			return
+		case _ = <-ticker:
+			if a == 0 {
+				a = 1
+			} else {
+				a = 0
+			}
+			out <- a
 		}
-		out <- a
 	}
 }
